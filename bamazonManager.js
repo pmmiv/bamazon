@@ -75,39 +75,37 @@ function addInventory () {
       type: "list",
       message: "What item would you like to restock?",
       choices: function() {
-              var choiceArray = [];
-              for (var i = 0; i < results.length; i++) {
-                choiceArray.push(results[i].item);
-              }
-              return choiceArray;
+        var choiceArray = [];
+        for (var i = 0; i < results.length; i++) {
+          choiceArray.push(results[i].item);
+        }
+        return choiceArray;
       }
     }).then(function(answer){
-        var chosenItem;
-        for (var i = 0; i < results.length; i++) {
-          if (results[i].item === answer.item) {
-            chosenItem = results[i];
-          }
-        };
+      var chosenItem;
+      for (var i = 0; i < results.length; i++) {
+        if (results[i].item === answer.item) {
+          chosenItem = results[i];
+        }
+      };
       //isn't working here
       inquirer.prompt({
         name: "number",
         message: "We have "+chosenItem.quantity+" "+chosenItem.item+"(s)\r\nHow many should we order?"
       }).then(function(ans){
-        var qry = "UPDATE quantity set ? WHERE ?";
-        connection.query(qry, {quantity: chosenItem.quantity + ans.number},{id: chosenItem.id}, function () {
-          console.log("\r\nStock updated!\r\n");
+        var qry = "UPDATE products set ? WHERE ?";
+        connection.query(qry, [{quantity: (parseInt(chosenItem.quantity) + parseInt(ans.number))}, {id: chosenItem.id}], function () {
+          console.log("\r\nUpdating Stock..\r\nGreat work managing the inventory!");
+          manager();
         })
       })
     });
-    console.log("Great work managing the inventory!");
-    manager();
   });
 };
 
 function addProduct () {
   connection.query("SELECT * FROM products", function(err, results) {
   if (err) throw err;
-    console.log(results);
     inquirer.prompt([{
       name: "newItem",
       message: "What new item are we going to be selling, boss?"
@@ -117,21 +115,38 @@ function addProduct () {
       message: "What department does the new item go into?",
       type: "list",
       choices: function() {
-              var choiceArray = [];
-              for (var i = 0; i < results.length; i++) {
-                if (!choiceArray.includes(results[i].department))
-                  {
-                    choiceArray.push(results[i].department);
-                  }
-              }
-              return choiceArray;
+        var choiceArray = [];
+        for (var i = 0; i < results.length; i++) {
+          if (!choiceArray.includes(results[i].department))
+            {
+              choiceArray.push(results[i].department);
+            }
         }
+        return choiceArray;
+      }
+    },
+    {
+      name: "quantity",
+      message: "How many do we have?"
+    },
+    {
+      name: "price",
+      message: "How much does it cost?"
     }
     ]).then(function(answer){
-      console.log("ball boy");
+      connection.query("INSERT INTO products SET ?", 
+      {
+        item: answer.newItem,
+        department: answer.department,
+        price: answer.price,
+        quantity: answer.quantity
+      }, function(err) {
+        if(err) throw err;
+        console.log("\r\nAlrighty. I'll stock the shelves and let the sales people know.\r\n")
+        manager();
+      })
     })
   });
-  manager();
 }
 
 
