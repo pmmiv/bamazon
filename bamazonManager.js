@@ -66,12 +66,13 @@ function viewLow () {
   })
 }
 
+//isn't working because of scope issues
 function addInventory () {
   connection.query("SELECT * FROM products", function(err, results) {
     if (err) throw err;
     inquirer.prompt({
       name: "item",
-      type: "rawlist",
+      type: "list",
       message: "What item would you like to restock?",
       choices: function() {
               var choiceArray = [];
@@ -87,22 +88,49 @@ function addInventory () {
             chosenItem = results[i];
           }
         };
-      console.log("\r\nWe have "+chosenItem.quantity+" "+chosenItem.item+"(s)");
+      //isn't working here
       inquirer.prompt({
         name: "number",
-        message: "How many should we order?"
+        message: "We have "+chosenItem.quantity+" "+chosenItem.item+"(s)\r\nHow many should we order?"
       }).then(function(ans){
-        var query = "UPDATE quantity set ? WHERE ?";
-        connection.query(query {quantity: chosenItem.quantity + ans.number},{id: chosenItem.id})
+        var qry = "UPDATE quantity set ? WHERE ?";
+        connection.query(qry, {quantity: chosenItem.quantity + ans.number},{id: chosenItem.id}, function () {
+          console.log("\r\nStock updated!\r\n");
+        })
       })
-      console.log("Great work managing the inventory!");
-      manager();
     });
+    console.log("Great work managing the inventory!");
+    manager();
   });
 };
 
 function addProduct () {
-  console.log("add Product");
+  connection.query("SELECT * FROM products", function(err, results) {
+  if (err) throw err;
+    console.log(results);
+    inquirer.prompt([{
+      name: "newItem",
+      message: "What new item are we going to be selling, boss?"
+    },
+    {
+      name: "department",
+      message: "What department does the new item go into?",
+      type: "list",
+      choices: function() {
+              var choiceArray = [];
+              for (var i = 0; i < results.length; i++) {
+                if (!choiceArray.includes(results[i].department))
+                  {
+                    choiceArray.push(results[i].department);
+                  }
+              }
+              return choiceArray;
+        }
+    }
+    ]).then(function(answer){
+      console.log("ball boy");
+    })
+  });
   manager();
 }
 
